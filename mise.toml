@@ -1,0 +1,15 @@
+[tools]
+node = "23.5.0"
+"npm:@biomejs/biome" = "1.9.4"
+"npm:tsx" = "4.19.2"
+pnpm = "9.15.1"
+
+[env]
+_.path = "node_modules/.bin"
+
+[tasks]
+fmt = "biome check --fix --unsafe ."
+
+gen-spec = "tsx scripts/gen-spec.ts"
+
+test = "vitest {% if get_env(name='CI', default='') == 'true' %} --run {% endif %}"
