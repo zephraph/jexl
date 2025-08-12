@@ -1,36 +1,52 @@
-import { type Program, type Expression, validateProgramTypes } from "./schemas/jexl";
+import {
+  type Expression,
+  type Program,
+  validateProgramTypes,
+} from "./schemas/jexl";
+
+// Type alias for runtime values in the JEXL interpreter
+type JexlValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JexlValue[]
+  | { [key: string]: JexlValue };
+
+// Type for built-in functions
+type BuiltinFunction = (...args: JexlValue[]) => JexlValue;
 
 interface IEnvironment {
   parent: IEnvironment | null;
-  vars: Map<string, any>;
-  functions: Map<string, Function | UserFunction>;
-  getVar(name: string): any;
-  setVar(name: string, value: any): void;
-  defineFunction(name: string, fn: Function | UserFunction): void;
-  getFunction(name: string): Function | UserFunction;
+  vars: Map<string, JexlValue>;
+  functions: Map<string, BuiltinFunction | UserFunction>;
+  getVar(name: string): JexlValue;
+  setVar(name: string, value: JexlValue): void;
+  defineFunction(name: string, fn: BuiltinFunction | UserFunction): void;
+  getFunction(name: string): BuiltinFunction | UserFunction;
 }
 
 interface UserFunction {
   params: Array<[string, string]>;
-  body: JexlExpression;
+  body: Expression;
 }
 
 interface LetBinding {
   let: {
     name: string;
-    value: JexlExpression;
+    value: Expression;
   };
 }
 
 interface DoBlock {
-  do: JexlExpression[];
+  do: Expression[];
 }
 
 interface IfExpression {
   if: {
-    condition: JexlExpression;
-    true?: JexlExpression;
-    false?: JexlExpression;
+    condition: Expression;
+    true?: Expression;
+    false?: Expression;
   };
 }
 
@@ -38,7 +54,7 @@ interface FunctionDefinition {
   function: {
     name: string;
     params: Array<[string, string]>;
-    body: JexlExpression;
+    body: Expression;
   };
 }
 
@@ -47,13 +63,13 @@ interface VarReference {
 }
 
 interface FunctionCall {
-  [key: string]: JexlExpression[];
+  [key: string]: Expression[];
 }
 
 class Environment implements IEnvironment {
   parent: IEnvironment | null;
-  vars: Map<string, any>;
-  functions: Map<string, Function | UserFunction>;
+  vars: Map<string, JexlValue>;
+  functions: Map<string, BuiltinFunction | UserFunction>;
 
   constructor(parent: IEnvironment | null = null) {
     this.parent = parent;
@@ -61,7 +77,7 @@ class Environment implements IEnvironment {
     this.functions = new Map();
   }
 
-  getVar(name: string): any {
+  getVar(name: string): JexlValue {
     if (this.vars.has(name)) {
       return this.vars.get(name);
     }
@@ -71,17 +87,18 @@ class Environment implements IEnvironment {
     throw new Error(`Undefined variable: ${name}`);
   }
 
-  setVar(name: string, value: any): void {
+  setVar(name: string, value: JexlValue): void {
     this.vars.set(name, value);
   }
 
-  defineFunction(name: string, fn: Function | UserFunction): void {
+  defineFunction(name: string, fn: BuiltinFunction | UserFunction): void {
     this.functions.set(name, fn);
   }
 
-  getFunction(name: string): Function | UserFunction {
-    if (this.functions.has(name)) {
-      return this.functions.get(name)!;
+  getFunction(name: string): BuiltinFunction | UserFunction {
+    const func = this.functions.get(name);
+    if (func !== undefined) {
+      return func;
     }
     if (this.parent) {
       return this.parent.getFunction(name);
@@ -92,23 +109,28 @@ class Environment implements IEnvironment {
 
 // === Built-in functions ===
 
-const builtins: Record<string, Function> = {
+const builtins: Record<string, BuiltinFunction> = {
   add: (a: number, b: number) => a + b,
   subtract: (a: number, b: number) => a - b,
   multiply: (a: number, b: number) => a * b,
   divide: (a: number, b: number) => a / b,
   less: (a: number, b: number) => a < b,
   greater: (a: number, b: number) => a > b,
-  equals: (a: any, b: any) => a === b,
-  print: (...args: any[]) => console.log(...args),
-  concat: (...args: any[]) => args.join(""),
+  equals: (a: JexlValue, b: JexlValue) => a === b,
+  print: (...args: JexlValue[]) => console.log(...args),
+  concat: (...args: JexlValue[]) => args.map(String).join(""),
 };
 
 // === Evaluator ===
 
-function evaluate(expr: Expression, env: Environment): any {
+function evaluate(expr: Expression, env: Environment): JexlValue {
   // Handle literal values
-  if (typeof expr === "string" || typeof expr === "number" || typeof expr === "boolean" || expr === null) {
+  if (
+    typeof expr === "string" ||
+    typeof expr === "number" ||
+    typeof expr === "boolean" ||
+    expr === null
+  ) {
     return expr;
   }
 
@@ -142,9 +164,13 @@ function evaluate(expr: Expression, env: Environment): any {
     const ifExpr = expr as IfExpression;
     const { condition, true: thenExpr, false: elseExpr } = ifExpr.if;
     const condResult = evaluate(condition, env);
-    return condResult ?
-      (thenExpr ? evaluate(thenExpr, env) : null) :
-      (elseExpr ? evaluate(elseExpr, env) : null);
+    return condResult
+      ? thenExpr
+        ? evaluate(thenExpr, env)
+        : null
+      : elseExpr
+        ? evaluate(elseExpr, env)
+        : null;
   }
 
   // Handle function definitions
@@ -171,7 +197,7 @@ function evaluate(expr: Expression, env: Environment): any {
   const args = functionCall[funcName];
 
   const func = env.getFunction(funcName);
-  const evaluatedArgs = args.map(arg => evaluate(arg, env));
+  const evaluatedArgs = args.map((arg) => evaluate(arg, env));
 
   if (typeof func === "function") {
     return func(...evaluatedArgs);
@@ -181,7 +207,7 @@ function evaluate(expr: Expression, env: Environment): any {
     const localEnv = new Environment(env);
     if (func.params.length !== evaluatedArgs.length) {
       throw new Error(
-        `Function '${funcName}' expected ${func.params.length} args but got ${evaluatedArgs.length}`
+        `Function '${funcName}' expected ${func.params.length} args but got ${evaluatedArgs.length}`,
       );
     }
     func.params.forEach(([paramName], idx) => {
@@ -221,4 +247,10 @@ function runProgram(program: Program): void {
   }
 }
 
-export { runProgram, evaluate, createGlobalEnv, Environment, type IEnvironment };
+export {
+  runProgram,
+  evaluate,
+  createGlobalEnv,
+  Environment,
+  type IEnvironment,
+};
