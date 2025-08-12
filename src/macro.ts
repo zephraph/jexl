@@ -1,3 +1,4 @@
+// biome-disable lint/complexity/noBannedTypes
 import type { Expression, Macro, Param } from "./schemas/jexl";
 
 function getParamName(param: Param): string {

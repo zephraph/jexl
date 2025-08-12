@@ -1,4 +1,4 @@
-import { type Program, Expression, validateProgramTypes } from "./schemas/jexl";
+import { type Program, type Expression, validateProgramTypes } from "./schemas/jexl";
 
 interface IEnvironment {
   parent: IEnvironment | null;
@@ -106,7 +106,7 @@ const builtins: Record<string, Function> = {
 
 // === Evaluator ===
 
-function evaluate(expr: JexlExpression, env: Environment): any {
+function evaluate(expr: Expression, env: Environment): any {
   // Handle literal values
   if (typeof expr === "string" || typeof expr === "number" || typeof expr === "boolean" || expr === null) {
     return expr;
@@ -205,7 +205,7 @@ function createGlobalEnv(): Environment {
 
 // === Run a full program ===
 
-function runProgram(program: JexlProgram): void {
+function runProgram(program: Program): void {
   if (!validateProgramTypes(program)) {
     throw new Error("Invalid program types");
   }

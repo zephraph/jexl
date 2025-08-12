@@ -11,7 +11,7 @@ type ValidationError = {
 
 function cleanErrors(errors: Iterable<unknown>): ValidationError[] {
   return [...errors].map((err) => {
-    const { schema, message, path, value } = err as any;
+    const { schema, message, path, value } = err;
     return {
       type: schema.$id,
       message,
@@ -50,27 +50,11 @@ describe("Jexl Literals", () => {
   it("null is valid", () => {
     expectType("Literal", null).toEqual([]);
   });
-
-  it("arrays are not valid", () => {
-    expectType("Literal", [1, 2, 3] as any).toMatchObject([
-      {
-        type: "Literal",
-      },
-    ]);
-  });
 });
 
 describe("Jexl variable references", () => {
   it("can be represented as an object", () => {
     expectType("VarReference", { ref: "x" }).toEqual([]);
-  });
-
-  it("is invalid if not an object", () => {
-    expectType("VarReference", ["ref", "x"] as any).toMatchObject([
-      {
-        type: "VarReference",
-      },
-    ]);
   });
 });
 

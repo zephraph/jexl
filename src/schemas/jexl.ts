@@ -52,6 +52,7 @@ export const JexlTypes = Type.Module({
       name: Type.String(),
       params: Type.Array(Type.Ref("Param")),
       body: Type.Ref("Expression"),
+      return: Type.Optional(Type.Ref("Expression"))
     }),
   }),
 
@@ -112,6 +113,9 @@ export type Macro = Static<typeof Macro>;
 
 export const Param = JexlTypes.Import("Param");
 export type Param = Static<typeof Param>;
+
+export const FunctionDef = JexlTypes.Import("FunctionDef");
+export type FunctionDef = Static<typeof FunctionDef>;
 
 // Helper function to validate types in a program
 export function validateProgramTypes(program: unknown): boolean {
