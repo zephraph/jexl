@@ -1,337 +1,301 @@
 {
-  "$defs": {
-    "Literal": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "$id": "Literal"
-    },
-    "VarReference": {
-      "type": "object",
-      "properties": {
-        "ref": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "ref"
-      ],
-      "$id": "VarReference"
-    },
-    "LetBinding": {
-      "type": "object",
-      "properties": {
-        "let": {
-          "type": "object",
-          "properties": {
-            "name": {
-              "type": "string"
-            },
-            "value": {
-              "$ref": "Expression"
-            }
-          },
-          "required": [
-            "name",
-            "value"
-          ]
-        }
-      },
-      "required": [
-        "let"
-      ],
-      "$id": "LetBinding"
-    },
-    "DoDef": {
-      "type": "object",
-      "properties": {
-        "do": {
-          "type": "array",
-          "items": {
-            "$ref": "Expression"
-          }
-        }
-      },
-      "required": [
-        "do"
-      ],
-      "$id": "DoDef"
-    },
-    "IfDef": {
-      "type": "object",
-      "properties": {
-        "if": {
-          "type": "object",
-          "properties": {
-            "condition": {
-              "$ref": "Expression"
-            },
-            "true": {
-              "$ref": "Expression"
-            },
-            "false": {
-              "$ref": "Expression"
-            }
-          },
-          "required": [
-            "condition"
-          ]
-        }
-      },
-      "required": [
-        "if"
-      ],
-      "$id": "IfDef"
-    },
-    "Param": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "minProperties": 1,
-          "maxProperties": 1,
-          "type": "object",
-          "patternProperties": {
-            "^(.*)$": {
-              "type": "string"
-            }
-          }
-        }
-      ],
-      "$id": "Param"
-    },
-    "Import": {
-      "type": "object",
-      "properties": {
-        "import": {
-          "type": "object",
-          "properties": {
-            "module": {
-              "type": "string"
-            },
-            "symbols": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          "required": [
-            "module",
-            "symbols"
-          ]
-        }
-      },
-      "required": [
-        "import"
-      ],
-      "$id": "Import"
-    },
-    "FunctionDef": {
-      "type": "object",
-      "properties": {
-        "function": {
-          "type": "object",
-          "properties": {
-            "name": {
-              "type": "string"
-            },
-            "params": {
-              "type": "array",
-              "items": {
-                "$ref": "Param"
-              }
-            },
-            "body": {
-              "$ref": "Expression"
-            },
-            "return": {
-              "$ref": "Expression"
-            }
-          },
-          "required": [
-            "name",
-            "params",
-            "body"
-          ]
-        }
-      },
-      "required": [
-        "function"
-      ],
-      "$id": "FunctionDef"
-    },
-    "MacroDef": {
-      "type": "object",
-      "properties": {
-        "macro": {
-          "type": "object",
-          "properties": {
-            "name": {
-              "type": "string"
-            },
-            "params": {
-              "type": "array",
-              "items": {
-                "$ref": "Param"
-              }
-            },
-            "body": {
-              "$ref": "Expression"
-            }
-          },
-          "required": [
-            "name",
-            "params",
-            "body"
-          ]
-        }
-      },
-      "required": [
-        "macro"
-      ],
-      "$id": "MacroDef"
-    },
-    "FunctionCall": {
-      "minProperties": 1,
-      "maxProperties": 1,
-      "type": "object",
-      "patternProperties": {
-        "^(.*)$": {
-          "type": "array",
-          "items": {
-            "$ref": "Expression"
-          }
-        }
-      },
-      "$id": "FunctionCall"
-    },
-    "SpecialForm": {
-      "type": "object",
-      "patternProperties": {
-        "^(.*)$": {
-          "type": "object",
-          "patternProperties": {
-            "^(.*)$": {}
-          }
-        }
-      },
-      "$id": "SpecialForm"
-    },
-    "Expression": {
-      "anyOf": [
-        {
-          "$ref": "Literal"
-        },
-        {
-          "$ref": "VarReference"
-        },
-        {
-          "$ref": "LetBinding"
-        },
-        {
-          "$ref": "DoDef"
-        },
-        {
-          "$ref": "IfDef"
-        },
-        {
-          "$ref": "FunctionDef"
-        },
-        {
-          "$ref": "MacroDef"
-        },
-        {
-          "$ref": "Import"
-        },
-        {
-          "$ref": "FunctionCall"
-        },
-        {
-          "$ref": "SpecialForm"
-        }
-      ],
-      "$id": "Expression"
-    },
-    "Module": {
-      "type": "object",
-      "properties": {
-        "types": {
-          "type": "object",
-          "patternProperties": {
-            "^(.*)$": {
-              "additionalProperties": true,
-              "type": "object",
-              "properties": {}
-            }
-          }
-        },
-        "exports": {
-          "type": "array",
-          "items": {
-            "$ref": "Expression"
-          }
-        }
-      },
-      "required": [
-        "exports"
-      ],
-      "$id": "Module"
-    },
-    "Program": {
-      "type": "object",
-      "properties": {
-        "jexl_version": {
-          "const": "v0.1",
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "types": {
-          "type": "object",
-          "patternProperties": {
-            "^(.*)$": {
-              "additionalProperties": true,
-              "type": "object",
-              "properties": {}
-            }
-          }
-        },
-        "modules": {
-          "type": "object",
-          "patternProperties": {
-            "^(.*)$": {
-              "$ref": "Module"
-            }
-          }
-        },
-        "program": {
-          "type": "array",
-          "items": {
-            "$ref": "Expression"
-          }
-        }
-      },
-      "required": [
-        "jexl_version",
-        "name",
-        "program"
-      ],
-      "$id": "Program"
-    }
-  },
-  "$ref": "Program"
+	"$defs": {
+		"Literal": {
+			"anyOf": [
+				{
+					"type": "string"
+				},
+				{
+					"type": "number"
+				},
+				{
+					"type": "boolean"
+				},
+				{
+					"type": "null"
+				}
+			],
+			"$id": "Literal"
+		},
+		"VarReference": {
+			"type": "object",
+			"properties": {
+				"ref": {
+					"type": "string"
+				}
+			},
+			"required": ["ref"],
+			"$id": "VarReference"
+		},
+		"LetBinding": {
+			"type": "object",
+			"properties": {
+				"let": {
+					"type": "object",
+					"properties": {
+						"name": {
+							"type": "string"
+						},
+						"value": {
+							"$ref": "Expression"
+						}
+					},
+					"required": ["name", "value"]
+				}
+			},
+			"required": ["let"],
+			"$id": "LetBinding"
+		},
+		"DoDef": {
+			"type": "object",
+			"properties": {
+				"do": {
+					"type": "array",
+					"items": {
+						"$ref": "Expression"
+					}
+				}
+			},
+			"required": ["do"],
+			"$id": "DoDef"
+		},
+		"IfDef": {
+			"type": "object",
+			"properties": {
+				"if": {
+					"type": "object",
+					"properties": {
+						"condition": {
+							"$ref": "Expression"
+						},
+						"true": {
+							"$ref": "Expression"
+						},
+						"false": {
+							"$ref": "Expression"
+						}
+					},
+					"required": ["condition"]
+				}
+			},
+			"required": ["if"],
+			"$id": "IfDef"
+		},
+		"Param": {
+			"anyOf": [
+				{
+					"type": "string"
+				},
+				{
+					"minProperties": 1,
+					"maxProperties": 1,
+					"type": "object",
+					"patternProperties": {
+						"^(.*)$": {
+							"type": "string"
+						}
+					}
+				}
+			],
+			"$id": "Param"
+		},
+		"Import": {
+			"type": "object",
+			"properties": {
+				"import": {
+					"type": "object",
+					"properties": {
+						"module": {
+							"type": "string"
+						},
+						"symbols": {
+							"type": "array",
+							"items": {
+								"type": "string"
+							}
+						}
+					},
+					"required": ["module", "symbols"]
+				}
+			},
+			"required": ["import"],
+			"$id": "Import"
+		},
+		"FunctionDef": {
+			"type": "object",
+			"properties": {
+				"function": {
+					"type": "object",
+					"properties": {
+						"name": {
+							"type": "string"
+						},
+						"params": {
+							"type": "array",
+							"items": {
+								"$ref": "Param"
+							}
+						},
+						"body": {
+							"$ref": "Expression"
+						},
+						"return": {
+							"$ref": "Expression"
+						}
+					},
+					"required": ["name", "params", "body"]
+				}
+			},
+			"required": ["function"],
+			"$id": "FunctionDef"
+		},
+		"MacroDef": {
+			"type": "object",
+			"properties": {
+				"macro": {
+					"type": "object",
+					"properties": {
+						"name": {
+							"type": "string"
+						},
+						"params": {
+							"type": "array",
+							"items": {
+								"$ref": "Param"
+							}
+						},
+						"body": {
+							"$ref": "Expression"
+						}
+					},
+					"required": ["name", "params", "body"]
+				}
+			},
+			"required": ["macro"],
+			"$id": "MacroDef"
+		},
+		"FunctionCall": {
+			"minProperties": 1,
+			"maxProperties": 1,
+			"type": "object",
+			"patternProperties": {
+				"^(.*)$": {
+					"type": "array",
+					"items": {
+						"$ref": "Expression"
+					}
+				}
+			},
+			"$id": "FunctionCall"
+		},
+		"SpecialForm": {
+			"type": "object",
+			"patternProperties": {
+				"^(.*)$": {
+					"type": "object",
+					"patternProperties": {
+						"^(.*)$": {}
+					}
+				}
+			},
+			"$id": "SpecialForm"
+		},
+		"Expression": {
+			"anyOf": [
+				{
+					"$ref": "Literal"
+				},
+				{
+					"$ref": "VarReference"
+				},
+				{
+					"$ref": "LetBinding"
+				},
+				{
+					"$ref": "DoDef"
+				},
+				{
+					"$ref": "IfDef"
+				},
+				{
+					"$ref": "FunctionDef"
+				},
+				{
+					"$ref": "MacroDef"
+				},
+				{
+					"$ref": "Import"
+				},
+				{
+					"$ref": "FunctionCall"
+				},
+				{
+					"$ref": "SpecialForm"
+				}
+			],
+			"$id": "Expression"
+		},
+		"Module": {
+			"type": "object",
+			"properties": {
+				"types": {
+					"type": "object",
+					"patternProperties": {
+						"^(.*)$": {
+							"additionalProperties": true,
+							"type": "object",
+							"properties": {}
+						}
+					}
+				},
+				"exports": {
+					"type": "array",
+					"items": {
+						"$ref": "Expression"
+					}
+				}
+			},
+			"required": ["exports"],
+			"$id": "Module"
+		},
+		"Program": {
+			"type": "object",
+			"properties": {
+				"jexl_version": {
+					"const": "v0.1",
+					"type": "string"
+				},
+				"name": {
+					"type": "string"
+				},
+				"types": {
+					"type": "object",
+					"patternProperties": {
+						"^(.*)$": {
+							"additionalProperties": true,
+							"type": "object",
+							"properties": {}
+						}
+					}
+				},
+				"modules": {
+					"type": "object",
+					"patternProperties": {
+						"^(.*)$": {
+							"$ref": "Module"
+						}
+					}
+				},
+				"program": {
+					"type": "array",
+					"items": {
+						"$ref": "Expression"
+					}
+				}
+			},
+			"required": ["jexl_version", "name", "program"],
+			"$id": "Program"
+		}
+	},
+	"$ref": "Program"
 }
