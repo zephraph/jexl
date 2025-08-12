@@ -11,7 +11,13 @@ type ValidationError = {
 
 function cleanErrors(errors: Iterable<unknown>): ValidationError[] {
 	return [...errors].map((err) => {
-		const { schema, message, path, value } = err;
+		const error = err as {
+			schema: { $id: string };
+			message: string;
+			path: string;
+			value?: unknown;
+		};
+		const { schema, message, path, value } = error;
 		return {
 			type: schema.$id,
 			message,
